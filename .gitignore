@@ -1,1 +1,2 @@
 .cursorindexingignore
+**/__pycache__/**
