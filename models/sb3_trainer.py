@@ -6,12 +6,8 @@ This module provides training functionality using Stable-Baselines3 algorithms
 """
 
 import os
-import sys
 from typing import Optional, Dict, Any
 import numpy as np
-
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from stable_baselines3 import PPO, A2C, DQN
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
@@ -25,6 +21,7 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.env_util import make_vec_env
 
 from environments.ticket_env import TicketAssignmentEnv
+from environments.ticket_env_temporal import TemporalTicketAssignmentEnv
 from utils.config import SB3Config, EnvironmentConfig, get_default_config
 from utils.metrics import TicketAssignmentMetrics
 
@@ -98,11 +95,21 @@ class SB3Trainer:
     def _make_env(self):
         """Create a single environment instance."""
         def _init():
-            env = TicketAssignmentEnv(
-                num_agents=self.env_config.num_agents,
-                num_tickets=self.env_config.num_tickets,
-                max_agent_load=self.env_config.max_agent_load
-            )
+            if self.env_config.use_temporal:
+                # Use fast temporal environment
+                env = TemporalTicketAssignmentEnv(
+                    num_agents=self.env_config.num_agents,
+                    episode_steps=self.env_config.episode_steps,
+                    tickets_per_step=self.env_config.tickets_per_step,
+                    max_queue_size=self.env_config.max_queue_size
+                )
+            else:
+                # Use simple instant assignment environment
+                env = TicketAssignmentEnv(
+                    num_agents=self.env_config.num_agents,
+                    num_tickets=self.env_config.num_tickets,
+                    max_agent_load=self.env_config.max_agent_load
+                )
             env = Monitor(env)
             return env
         return _init
@@ -333,11 +340,19 @@ class SB3Trainer:
             raise ValueError("No model to evaluate. Train or load a model first.")
 
         # Create evaluation environment
-        eval_env = TicketAssignmentEnv(
-            num_agents=self.env_config.num_agents,
-            num_tickets=self.env_config.num_tickets,
-            max_agent_load=self.env_config.max_agent_load
-        )
+        if self.env_config.use_temporal:
+            eval_env = TemporalTicketAssignmentEnv(
+                num_agents=self.env_config.num_agents,
+                episode_steps=self.env_config.episode_steps,
+                tickets_per_step=self.env_config.tickets_per_step,
+                max_queue_size=self.env_config.max_queue_size
+            )
+        else:
+            eval_env = TicketAssignmentEnv(
+                num_agents=self.env_config.num_agents,
+                num_tickets=self.env_config.num_tickets,
+                max_agent_load=self.env_config.max_agent_load
+            )
 
         metrics_calc = TicketAssignmentMetrics()
         results = []

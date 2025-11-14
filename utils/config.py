@@ -14,9 +14,22 @@ import os
 @dataclass
 class EnvironmentConfig:
     """Configuration for the Ticket Assignment Environment."""
-    num_agents: int = 5
+    # Environment type
+    use_temporal: bool = True  # Use temporal environment (recommended)
+
+    # Agent configuration
+    num_agents: int = 4  # Reduced from 5 for faster training
+
+    # Simple environment settings
     num_tickets: int = 100
     max_agent_load: int = 10
+
+    # Temporal environment settings
+    episode_steps: int = 30  # Time steps per episode (fast training)
+    tickets_per_step: float = 1.0  # Avg tickets arriving per step
+    max_queue_size: int = 20  # Max queue length
+
+    # Rendering
     render_mode: str = None
 
 
@@ -26,10 +39,10 @@ class SB3Config:
     # Algorithm selection
     algorithm: str = "PPO"  # Options: PPO, A2C, DQN
 
-    # Training parameters
-    total_timesteps: int = 500_000
+    # Training parameters (optimized for fast training)
+    total_timesteps: int = 50_000  # Reduced from 500K for fast training
     learning_rate: float = 3e-4
-    n_steps: int = 2048  # For PPO/A2C
+    n_steps: int = 512  # Reduced from 2048 for faster updates
     batch_size: int = 64
     n_epochs: int = 10  # For PPO
     gamma: float = 0.99
@@ -39,14 +52,14 @@ class SB3Config:
     policy: str = "MlpPolicy"
     net_arch: list = None  # Will use default if None
 
-    # Vectorized environments
-    n_envs: int = 4
+    # Vectorized environments (reduced for speed)
+    n_envs: int = 2  # Reduced from 4 for faster training
 
-    # Logging and checkpointing
+    # Logging and checkpointing (more frequent for fast training)
     log_interval: int = 10
-    save_freq: int = 10_000
-    eval_freq: int = 10_000
-    n_eval_episodes: int = 10
+    save_freq: int = 5_000  # Reduced from 10K
+    eval_freq: int = 5_000  # Reduced from 10K
+    n_eval_episodes: int = 5  # Reduced from 10
 
     # Model save path
     model_dir: str = "models/saved_models/sb3"
@@ -64,24 +77,24 @@ class RLlibConfig:
     # Algorithm selection
     algorithm: str = "PPO"  # Options: PPO, APPO, DQN
 
-    # Training parameters
-    num_iterations: int = 500
-    train_batch_size: int = 4000
+    # Training parameters (optimized for fast training)
+    num_iterations: int = 100  # Reduced from 500 for fast training
+    train_batch_size: int = 2000  # Reduced from 4000
     sgd_minibatch_size: int = 128
     num_sgd_iter: int = 10
     lr: float = 3e-4
     gamma: float = 0.99
     lambda_: float = 0.95
 
-    # Environment settings
-    num_workers: int = 4
+    # Environment settings (reduced for speed)
+    num_workers: int = 2  # Reduced from 4 for faster training
     num_envs_per_worker: int = 1
 
     # Network architecture
     model_config: Dict[str, Any] = None
 
-    # Checkpointing
-    checkpoint_freq: int = 50
+    # Checkpointing (more frequent for fast training)
+    checkpoint_freq: int = 20  # Reduced from 50
     checkpoint_dir: str = "models/saved_models/rllib"
 
     def __post_init__(self):
@@ -174,7 +187,9 @@ class ProjectConfig:
         filepath : str
             Path to save the configuration file.
         """
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        dir_path = os.path.dirname(filepath)
+        if dir_path:  # Only create directory if there is one
+            os.makedirs(dir_path, exist_ok=True)
         with open(filepath, 'w') as f:
             yaml.dump(self.to_dict(), f, default_flow_style=False, sort_keys=False)
         print(f"Configuration saved to {filepath}")

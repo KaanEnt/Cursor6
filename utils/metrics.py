@@ -9,11 +9,7 @@ performance metrics.
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Any, Callable
-import sys
-import os
 
-# Add parent directory to path for imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from data.ticket_generator import PRIORITIES
 
 

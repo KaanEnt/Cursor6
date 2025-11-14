@@ -6,12 +6,8 @@ algorithms for the ticket assignment environment.
 """
 
 import os
-import sys
 from typing import Optional, Dict, Any
 import numpy as np
-
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import ray
 from ray import tune, air
@@ -21,11 +17,12 @@ from ray.rllib.algorithms.dqn import DQNConfig
 from ray.rllib.env.env_context import EnvContext
 
 from environments.ticket_env import TicketAssignmentEnv
+from environments.ticket_env_temporal import TemporalTicketAssignmentEnv
 from utils.config import RLlibConfig, EnvironmentConfig, get_default_config
 from utils.metrics import TicketAssignmentMetrics
 
 
-def env_creator(env_config: EnvContext) -> TicketAssignmentEnv:
+def env_creator(env_config: EnvContext):
     """
     Environment creator function for Ray RLlib.
 
@@ -36,14 +33,24 @@ def env_creator(env_config: EnvContext) -> TicketAssignmentEnv:
 
     Returns
     -------
-    TicketAssignmentEnv
+    TicketAssignmentEnv or TemporalTicketAssignmentEnv
         Created environment instance.
     """
-    return TicketAssignmentEnv(
-        num_agents=env_config.get('num_agents', 5),
-        num_tickets=env_config.get('num_tickets', 100),
-        max_agent_load=env_config.get('max_agent_load', 10)
-    )
+    use_temporal = env_config.get('use_temporal', True)
+
+    if use_temporal:
+        return TemporalTicketAssignmentEnv(
+            num_agents=env_config.get('num_agents', 4),
+            episode_steps=env_config.get('episode_steps', 30),
+            tickets_per_step=env_config.get('tickets_per_step', 1.0),
+            max_queue_size=env_config.get('max_queue_size', 20)
+        )
+    else:
+        return TicketAssignmentEnv(
+            num_agents=env_config.get('num_agents', 4),
+            num_tickets=env_config.get('num_tickets', 100),
+            max_agent_load=env_config.get('max_agent_load', 10)
+        )
 
 
 class RLlibTrainer:
@@ -113,9 +120,15 @@ class RLlibTrainer:
 
         # Environment config for RLlib
         env_config = {
+            'use_temporal': self.env_config.use_temporal,
             'num_agents': self.env_config.num_agents,
+            # Simple environment settings
             'num_tickets': self.env_config.num_tickets,
-            'max_agent_load': self.env_config.max_agent_load
+            'max_agent_load': self.env_config.max_agent_load,
+            # Temporal environment settings
+            'episode_steps': self.env_config.episode_steps,
+            'tickets_per_step': self.env_config.tickets_per_step,
+            'max_queue_size': self.env_config.max_queue_size
         }
 
         # Create base config based on algorithm
@@ -298,11 +311,19 @@ class RLlibTrainer:
             raise ValueError("No algorithm to evaluate. Train or load an algorithm first.")
 
         # Create evaluation environment
-        eval_env = TicketAssignmentEnv(
-            num_agents=self.env_config.num_agents,
-            num_tickets=self.env_config.num_tickets,
-            max_agent_load=self.env_config.max_agent_load
-        )
+        if self.env_config.use_temporal:
+            eval_env = TemporalTicketAssignmentEnv(
+                num_agents=self.env_config.num_agents,
+                episode_steps=self.env_config.episode_steps,
+                tickets_per_step=self.env_config.tickets_per_step,
+                max_queue_size=self.env_config.max_queue_size
+            )
+        else:
+            eval_env = TicketAssignmentEnv(
+                num_agents=self.env_config.num_agents,
+                num_tickets=self.env_config.num_tickets,
+                max_agent_load=self.env_config.max_agent_load
+            )
 
         metrics_calc = TicketAssignmentMetrics()
         results = []

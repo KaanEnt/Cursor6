@@ -2,6 +2,47 @@
 
 This document contains commands to run after each implementation phase.
 
+## Quick Start Commands
+
+```bash
+# 1. Install dependencies
+conda activate VenvWeb
+pip install -r requirements.txt
+
+# 2. Test temporal environment (RECOMMENDED)
+python environments/ticket_env_temporal.py
+
+# 3. Test config
+python utils/config.py
+
+# 4. Train model (5-10 minutes)
+python models/sb3_trainer.py
+
+# 5. Launch dashboard
+streamlit run dashboard/app.py
+```
+
+---
+
+## Important: Fast Training Configuration
+
+**This project is optimized for fast training (target: 10-20 minutes per run):**
+
+- **Temporal Environment**: Realistic time-based simulation with 30-step episodes
+- **Fast Training Defaults**:
+  - 50K timesteps (vs 500K in typical RL)
+  - 4 agents (vs 5)
+  - 2 parallel environments (vs 4-8)
+  - Coarse time granularity (10-15 min blocks)
+
+**Two Environment Options:**
+1. **Temporal (DEFAULT, RECOMMENDED)**: Realistic queue dynamics, agent availability, time-based resolution
+2. **Simple**: Instant assignment, formula-based evaluation (for comparison)
+
+Set `use_temporal=True` in config to use the temporal environment (default).
+
+---
+
 ## Phase 1: Initial Setup & Data Generator
 
 ### Setup Commands
@@ -52,18 +93,33 @@ print(agents['skills'][0])  # View first agent's skills
 
 ### Testing the Custom Gymnasium Environment
 
+**Simple Environment (instant assignment):**
 ```bash
-# Run the environment test script
 python environments/ticket_env.py
 ```
 
-### Expected Output
-
-The environment test should display:
+**Expected Output:**
 - Action and observation space details
 - 10 random steps with rewards
 - Full episode statistics (workload distribution, total reward)
 - Stable-Baselines3 environment checker validation (if SB3 is installed)
+
+**Temporal Environment (realistic, time-based - RECOMMENDED):**
+```bash
+python environments/ticket_env_temporal.py
+```
+
+**Expected Output:**
+- 30-step episode simulation
+- Agent availability tracking (busy/free states)
+- Queue management with wait times
+- SLA compliance tracking
+- Realistic resolution times over multiple steps
+- Environment passes SB3 checker
+
+**Key Differences:**
+- Temporal: Agents have busy periods, tickets wait in queue, realistic time flow
+- Simple: Instant assignment, formula-based resolution times
 
 ### Testing Configuration Management
 
@@ -105,19 +161,21 @@ pip install -r requirements.txt
 
 ### Testing Stable-Baselines3 Training
 
-**Quick Test (Small training run):**
+**Fast Training (DEFAULT - optimized for speed):**
 
 ```bash
-# This will train for 500K timesteps (takes ~10-20 minutes)
+# This will train for 50K timesteps (takes ~5-10 minutes)
+# Uses temporal environment by default
 python models/sb3_trainer.py
 ```
 
 **Expected Output:**
-- Model creation confirmation
+- Model creation confirmation (PPO with 2 parallel envs)
 - Training progress with episode rewards
-- Checkpoint saves every 10K steps
+- Checkpoint saves every 5K steps
 - Final evaluation metrics after training
 - Model saved to `models/saved_models/sb3/`
+- **Training time: 5-10 minutes** on modern CPU
 
 **Custom Training (Optional):**
 
@@ -125,12 +183,19 @@ python models/sb3_trainer.py
 from models.sb3_trainer import SB3Trainer
 from utils.config import SB3Config, EnvironmentConfig
 
-# Create custom config
-env_config = EnvironmentConfig(num_agents=5, num_tickets=100)
+# Customize environment
+env_config = EnvironmentConfig(
+    use_temporal=True,  # Use temporal environment (recommended)
+    num_agents=4,
+    episode_steps=30,  # 30 time steps per episode
+    tickets_per_step=1.0
+)
+
+# Customize training
 sb3_config = SB3Config(
     algorithm="PPO",
-    total_timesteps=100_000,  # Shorter for quick testing
-    n_envs=4
+    total_timesteps=50_000,  # Fast training
+    n_envs=2
 )
 
 # Train
@@ -138,26 +203,32 @@ trainer = SB3Trainer(env_config, sb3_config)
 trainer.create_model()
 trainer.train()
 trainer.save_model()
+
+# Evaluate
+results = trainer.evaluate(n_episodes=5)
+print(f"SLA Compliance: {results['sla_compliance']:.1%}")
 ```
 
 ### Testing Ray RLlib Training
 
-**Quick Test:**
+**Fast Training (DEFAULT - optimized for speed):**
 
 ```bash
-# This will train for 500 iterations (takes ~15-30 minutes)
+# This will train for 100 iterations (takes ~10-15 minutes)
+# Uses temporal environment by default
 python models/rllib_trainer.py
 ```
 
 **Expected Output:**
 - Ray initialization
-- Algorithm creation with worker configuration
+- Algorithm creation with 2 workers
 - Training progress every 10 iterations
-- Checkpoint saves every 50 iterations
+- Checkpoint saves every 20 iterations
 - Final evaluation metrics
 - Checkpoints saved to `models/saved_models/rllib/`
+- **Training time: 10-15 minutes** on modern CPU
 
-**Note:** Ray may use significant system resources. Adjust `num_workers` in config if needed.
+**Note:** Ray may use significant system resources. The fast config uses 2 workers (vs 4) to reduce overhead.
 
 ---
 

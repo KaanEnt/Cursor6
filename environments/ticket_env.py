@@ -10,11 +10,7 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 from typing import Dict, List, Tuple, Optional, Any
-import sys
-import os
 
-# Add parent directory to path for imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from data.ticket_generator import generate_data, TICKET_TYPES, PRIORITIES
 
 

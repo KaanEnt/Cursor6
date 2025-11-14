@@ -12,11 +12,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 import os
-import sys
 from typing import Dict, Any, List
-
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from environments.ticket_env import TicketAssignmentEnv
 from utils.metrics import TicketAssignmentMetrics, random_baseline_policy
