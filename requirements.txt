@@ -1,0 +1,18 @@
+# Core data manipulation
+pandas
+numpy
+
+# Reinforcement Learning
+gymnasium
+stable-baselines3[extra]
+ray[rllib]
+tensorboard
+
+# Visualization
+streamlit
+matplotlib
+seaborn
+plotly
+
+# Utilities
+pyyaml
