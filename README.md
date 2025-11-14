@@ -1,6 +1,30 @@
 # RL-Based Support Ticket Assignment System
 
-An intelligent reinforcement learning system for automatically assigning support tickets to agents based on their skills, workload, and ticket priority.
+Intelligent reinforcement learning system for automatically assigning support tickets to agents based on their skills, workload, and ticket priority.
+
+## Quick Start (2 Minutes)
+
+Want to see it work right now? Run this:
+
+```bash
+# 1. Install
+conda activate VenvWeb
+pip install gymnasium stable-baselines3 pandas numpy
+
+# 2. Run
+python demo_simple.py
+```
+
+**What you'll see:**
+- Random policy baseline (~50 tickets)
+- RL agent training (10K steps, ~1 minute)
+- Comparison showing RL improvement
+- Next steps to explore more
+
+**Want the full experience?** Continue to [Quick Start](#quick-start) below.
+**Need a command reference?** See [QUICKREF.md](QUICKREF.md) for a cheat sheet.
+
+---
 
 ## Overview
 
@@ -30,10 +54,12 @@ This project implements a complete RL-based ticket assignment system using:
 
 ```
 .
+├── demo_simple.py                # 🚀 2-MINUTE DEMO - Start here!
 ├── data/
 │   └── ticket_generator.py       # Synthetic data generation
 ├── environments/
-│   └── ticket_env.py             # Custom Gymnasium environment
+│   ├── ticket_env.py             # Simple instant-assignment environment
+│   └── ticket_env_temporal.py    # ⭐ Realistic temporal environment (recommended)
 ├── models/
 │   ├── sb3_trainer.py            # Stable-Baselines3 training pipeline
 │   ├── rllib_trainer.py          # Ray RLlib training pipeline
@@ -43,7 +69,7 @@ This project implements a complete RL-based ticket assignment system using:
 │   └── logs/                     # Training logs
 │       └── sb3/
 ├── utils/
-│   ├── config.py                 # Configuration management
+│   ├── config.py                 # Configuration management (fast defaults)
 │   └── metrics.py                # Evaluation metrics
 ├── dashboard/
 │   └── app.py                    # Streamlit dashboard
@@ -51,6 +77,20 @@ This project implements a complete RL-based ticket assignment system using:
 ├── TESTING.md                    # Comprehensive testing guide
 └── README.md                     # This file
 ```
+
+## Demo Options
+
+**Three ways to explore this project:**
+
+| Demo | Time | What You Get | Command |
+|------|------|--------------|---------|
+| **🚀 Super Quick** | 2 min | Simple environment, basic training, instant results | `python demo_simple.py` |
+| **⚡ Fast & Realistic** | 10 min | Temporal environment, full training, metrics | `python models/sb3_trainer.py` |
+| **🎨 Full Experience** | 15 min | Dashboard, visualizations, comparisons | `streamlit run dashboard/app.py` |
+
+💡 **Want to understand the architecture?** See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed environment comparisons and design decisions.
+
+---
 
 ## Quick Start
 
